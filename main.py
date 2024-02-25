@@ -1,5 +1,6 @@
 import pygame
 import time
+import random
 
 pygame.init()
 
@@ -138,6 +139,38 @@ def create_matrix():
 def colour_tile(tile_type):
     match tile_type:
         case 0:
+            return (100,100,100)
+        case 1:
+            return (0,0,0)
+        case 2:
+            return (0,0,0)
+        case 3:
+            return (0,0,0)
+        case 4:
+            return (0,0,0)
+        case 5:
+            return (0,0,0)
+        case 6:
+            return (0,0,0)
+        case 7:
+            return (0,0,0)
+        case 8:
+            return (0,0,0)
+        case 9:
+            return (0,0,0)
+        case 10:
+            return (0,0,0)
+        case 11:
+            return (0,0,0)
+        case 12:
+            return (0,0,0)
+        case 13:
+            return (0,0,0)
+        case 14:
+            return (0,0,0)
+        case 15:
+            return (0,0,0)
+        case 16:
             return (0,0,0)
         case _ :
             return (255,255,255)
@@ -156,10 +189,22 @@ class Tile:
 
     def update_possibilities(self, new_possibilities):
         self.possibilities = [x for x in self.possibilities if x in new_possibilities]
+        if len(self.possibilities) == 1:
+            self.collapse()
 
     def paint_on_screen(self):
         pygame.draw.rect(screen, colour_tile(self.tile_type), pygame.Rect(self.x * 64,self.y * 64,64,64))
 
+    def collapse(self):
+        self.tile_type = random.choice(self.possibilities)
+        if self.x > 0 :
+            map_grid[self.y][self.x - 1].update_possibilities(possible_connections[self.tile_type - 1]["left"])
+        if self.x < 14 :
+            map_grid[self.y][self.x + 1].update_possibilities(possible_connections[self.tile_type - 1]["right"])
+        if self.y > 0:
+            map_grid[self.y - 1][self.x].update_possibilities(possible_connections[self.tile_type - 1]["up"])
+        if self.y < 14:
+            map_grid[self.y + 1][self.x].update_possibilities(possible_connections[self.tile_type - 1]["down"])
 
 
 
@@ -170,7 +215,6 @@ while running:
 
     for y in map_grid:
         for x in y:
-            print(x)
             x.paint_on_screen()
 
     for event in pygame.event.get():
