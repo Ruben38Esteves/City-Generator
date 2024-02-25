@@ -228,7 +228,7 @@ class Tile:
         if len(self.possibilities) == 1:
             self.collapse()
         if len(self.possibilities) == 0:
-            self.possibilities = save_for_debug
+            self.possibilities = new_possibilities
             """
             print(self)
             print(save_for_debug)
