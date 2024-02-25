@@ -119,10 +119,38 @@ possible_connections = [
     },
     #16
     {
-        "up": [1],
-        "down" : [2],
-        "left" : [4],
-        "right" : [3]
+        "up": [1,19,20],
+        "down" : [2,17,18],
+        "left" : [4,18,20],
+        "right" : [3,17,19]
+    },
+    #17
+    {
+        "up": [1,16,19,20],
+        "down" : [3,5],
+        "left" : [4,16,18,20],
+        "right" : [2,5]
+    },
+    #18
+    {
+        "up": [1,16,19,20],
+        "down" : [4,6],
+        "left" : [2,6],
+        "right" : [3,16,17,19]
+    },
+    #19
+    {
+        "up": [3,7],
+        "down" : [2,16,17,20],
+        "left" : [4,16,18,20],
+        "right" : [1,7]
+    },
+    #20
+    {
+        "up": [4,8],
+        "down" : [2,16,17,20],
+        "left" : [1,8],
+        "right" : [3,16,17,19]
     }
 ]
 
@@ -209,10 +237,18 @@ def get_tile_image(tile_type):
             return image15
         case 16:
             return image16
+        case 17:
+            return image17
+        case 18:
+            return image18
+        case 19:
+            return image19
+        case 20:
+            return image20
 
 
 class Tile:
-    possibilities = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+    possibilities = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
     tile_type = 0
 
     def __init__(self,x,y):
@@ -228,7 +264,7 @@ class Tile:
         if len(self.possibilities) == 1:
             self.collapse()
         if len(self.possibilities) == 0:
-            self.possibilities = new_possibilities
+            self.possibilities = save_for_debug + new_possibilities
             """
             print(self)
             print(save_for_debug)
@@ -238,19 +274,20 @@ class Tile:
 
     def paint_on_screen(self):
         if self.tile_type >= 1 :
-            print("should paint a tile")
             screen.blit(get_tile_image(self.tile_type),(self.x *64,self.y * 64))
         else:
             pygame.draw.rect(screen, colour_tile(self.tile_type), pygame.Rect(self.x * 64,self.y * 64,64,64))
 
     def collapse(self):
-        print(self.possibilities)
         if len(self.possibilities) > 0:
             self.tile_type = random.choice(self.possibilities)
             print("x:" + str(self.x) + ", y:" + str(self.y) + "    became: " + str(self.tile_type))
             if self.x > 0 :
                 if map_grid[self.y][self.x - 1].tile_type == 0:
                     map_grid[self.y][self.x - 1].update_possibilities(possible_connections[self.tile_type - 1]["left"])
+                    print(self)
+                    print("left")
+                    print(possible_connections[self.tile_type - 1]["left"])
             if self.x < 14 :
                 if map_grid[self.y][self.x + 1].tile_type == 0:
                     map_grid[self.y][self.x + 1].update_possibilities(possible_connections[self.tile_type - 1]["right"])
@@ -307,6 +344,10 @@ image13 = pygame.image.load('tile_13.png')
 image14 = pygame.image.load('tile_14.png')
 image15 = pygame.image.load('tile_15.png')
 image16 = pygame.image.load('tile_16.png')
+image17 = pygame.image.load('tile_17.png')
+image18 = pygame.image.load('tile_18.png')
+image19 = pygame.image.load('tile_19.png')
+image20 = pygame.image.load('tile_20.png')
 
 while running:
     screen.fill((0,0,255))
