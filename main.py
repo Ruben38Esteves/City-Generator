@@ -3,6 +3,8 @@ import time
 import random
 
 pygame.init()
+pygame.font.init()
+my_font = pygame.font.SysFont('Comic Sans MS', 30)
 
 SCREEN_WIDTH = 960
 SCREEN_HEIGHT = 960
@@ -43,29 +45,29 @@ possible_connections = [
     #5
     {
         "up": [3,7,17],
-        "down" : [10,12,15],
+        "down" : [1,10,12,15],
         "left" : [2,6,17],
-        "right" : [9,14,15]
+        "right" : [4,9,14,15]
     },
     #6
     {
         "up": [4,8,18],
-        "down" : [10,12,15],
-        "left" : [9,11,12],
+        "down" : [1,10,12,15],
+        "left" : [3,9,11,12],
         "right" : [2,5,18]
     },
     #7
     {
-        "up": [10,11,14],
+        "up": [2,10,11,14],
         "down" : [3,5,19],
         "left" : [1,8,19],
-        "right" : [9,14,15]
+        "right" : [4,9,14,15]
     },
     #8
     {
-        "up": [10,11,14],
+        "up": [2,10,11,14],
         "down" : [4,6,20],
-        "left" : [9,11,12],
+        "left" : [3,9,11,12],
         "right" : [1,7,20]
     },
     #9
@@ -250,8 +252,7 @@ def get_tile_image(tile_type):
 conflicts = 0
 
 class Tile:
-    possibilities = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,18,17,18,19,20]
-    #possibilities = [9,10,11,12,13,14,15]
+    possibilities = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
     tile_type : int = 0
     updated = False
 
@@ -266,11 +267,12 @@ class Tile:
         self.updated = True
         save_for_debug = self.possibilities
         self.possibilities = [x for x in self.possibilities if x in new_possibilities]
-        self.update_possible_neighboors()
+        #self.update_possible_neighboors()
         if len(self.possibilities) == 1:
             self.collapse()
         elif len(self.possibilities) == 0:
-            print("no options")
+            print(save_for_debug)
+            print(new_possibilities)
         """
         if len(self.possibilities) == 0:
             self.possibilities =  save_for_debug
@@ -286,20 +288,22 @@ class Tile:
         if self.tile_type >= 1 :
             screen.blit(get_tile_image(self.tile_type),(self.x *64,self.y * 64))
         else:
-            pygame.draw.rect(screen, colour_tile(self.tile_type), pygame.Rect(self.x * 64,self.y * 64,64,64))
+            text = my_font.render(str(len(self.possibilities)), False, (255, 255, 255))
+            screen.blit(text, (self.x *64,self.y * 64))
+            #pygame.draw.rect(screen, colour_tile(self.tile_type), pygame.Rect(self.x * 64,self.y * 64,64,64))
 
     def update_possible_neighboors(self):
         if self.x > 0 :
-            if map_grid[self.y][self.x - 1].tile_type == 0 and map_grid[self.y + 1][self.x - 1].updated == False:
+            if map_grid[self.y][self.x - 1].tile_type == 0: #and map_grid[self.y + 1][self.x - 1].updated == False:
                 map_grid[self.y][self.x - 1].update_possibilities(possible_connections[self.tile_type - 1]["left"])
         if self.x < 14 :
-            if map_grid[self.y][self.x + 1].tile_type == 0 and map_grid[self.y + 1][self.x - 1].updated == False:
+            if map_grid[self.y][self.x + 1].tile_type == 0: #and map_grid[self.y + 1][self.x - 1].updated == False:
                 map_grid[self.y][self.x + 1].update_possibilities(possible_connections[self.tile_type - 1]["right"])
         if self.y > 0:
-            if map_grid[self.y - 1][self.x].tile_type == 0 and map_grid[self.y + 1][self.x - 1].updated == False:
+            if map_grid[self.y - 1][self.x].tile_type == 0: #and map_grid[self.y + 1][self.x - 1].updated == False:
                 map_grid[self.y - 1][self.x].update_possibilities(possible_connections[self.tile_type - 1]["up"])
         if self.y < 14:
-            if map_grid[self.y + 1][self.x - 1].tile_type == 0 and map_grid[self.y + 1][self.x - 1].updated == False:
+            if map_grid[self.y + 1][self.x - 1].tile_type == 0: #and map_grid[self.y + 1][self.x - 1].updated == False:
                 map_grid[self.y + 1][self.x].update_possibilities(possible_connections[self.tile_type - 1]["down"])
 
 
@@ -307,7 +311,8 @@ class Tile:
         if len(self.possibilities) > 0:
             self.tile_type = random.choice(self.possibilities)
             #print("x:" + str(self.x) + ", y:" + str(self.y) + "    became: " + str(self.tile_type))
-            update_map(self.x, self.y)
+            #update_map(self.x, self.y)~
+            self.update_possible_neighboors()
             
 
 def check_complete():
@@ -341,7 +346,7 @@ def collapse_min_options():
     
 def update_map(x,y):
     for i in map_grid:
-        for j in y:
+        for j in i:
             if map_grid[i][j].tile_type == 0:
                 map_grid[i][j].updated = False
 
