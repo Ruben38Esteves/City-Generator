@@ -14,7 +14,7 @@ pygame.display.set_caption("Main Window")
 possible_connections = [
     #1
     {
-        "up": [10,11,14],
+        "up": [2,5,6,10,11,14],
         "down" : [2,16,17,18],
         "left" : [1,8,19],
         "right" : [	1,7,20]
@@ -22,7 +22,7 @@ possible_connections = [
     #2
     {
         "up": [1,16,19,20],
-        "down" : [10,12,15],
+        "down" : [1,7,8,10,12,15],
         "left" : [2,6,17],
         "right" : [2,5,18]
     },
@@ -31,13 +31,13 @@ possible_connections = [
         "up": [3,7,17],
         "down" : [3,5,19],
         "left" : [4,16,18,20],
-        "right" : [9,11,12]
+        "right" : [4,6,8,9,11,12]
     },
     #4
     {
         "up": [4,8,18],
         "down" : [4,6,20],
-        "left" : [9,11,12],
+        "left" : [3,5,7,9,11,12],
         "right" : [3,16,17,19]
     },
     #5
@@ -162,6 +162,7 @@ def create_matrix():
             new_tile = Tile(x,y)
             new_line.append(new_tile)
         new_matrix.append(new_line)
+    print(new_matrix)
     return new_matrix
 
 def colour_tile(tile_type):
@@ -246,10 +247,13 @@ def get_tile_image(tile_type):
         case 20:
             return image20
 
+conflicts = 0
 
 class Tile:
-    possibilities = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
-    tile_type = 0
+    possibilities = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,18,17,18,19,20]
+    #possibilities = [9,10,11,12,13,14,15]
+    tile_type : int = 0
+    updated = False
 
     def __init__(self,x,y):
         self.x = x
@@ -259,13 +263,19 @@ class Tile:
         return "x:" + str(self.x) + ", y:" + str(self.y)
 
     def update_possibilities(self, new_possibilities):
+        self.updated = True
         save_for_debug = self.possibilities
         self.possibilities = [x for x in self.possibilities if x in new_possibilities]
+        self.update_possible_neighboors()
         if len(self.possibilities) == 1:
             self.collapse()
+        elif len(self.possibilities) == 0:
+            print("no options")
+        """
         if len(self.possibilities) == 0:
-            self.possibilities = save_for_debug + new_possibilities
-            """
+            self.possibilities =  save_for_debug
+            print("conflicts")
+            
             print(self)
             print(save_for_debug)
             print(new_possibilities)
@@ -278,30 +288,32 @@ class Tile:
         else:
             pygame.draw.rect(screen, colour_tile(self.tile_type), pygame.Rect(self.x * 64,self.y * 64,64,64))
 
+    def update_possible_neighboors(self):
+        if self.x > 0 :
+            if map_grid[self.y][self.x - 1].tile_type == 0 and map_grid[self.y + 1][self.x - 1].updated == False:
+                map_grid[self.y][self.x - 1].update_possibilities(possible_connections[self.tile_type - 1]["left"])
+        if self.x < 14 :
+            if map_grid[self.y][self.x + 1].tile_type == 0 and map_grid[self.y + 1][self.x - 1].updated == False:
+                map_grid[self.y][self.x + 1].update_possibilities(possible_connections[self.tile_type - 1]["right"])
+        if self.y > 0:
+            if map_grid[self.y - 1][self.x].tile_type == 0 and map_grid[self.y + 1][self.x - 1].updated == False:
+                map_grid[self.y - 1][self.x].update_possibilities(possible_connections[self.tile_type - 1]["up"])
+        if self.y < 14:
+            if map_grid[self.y + 1][self.x - 1].tile_type == 0 and map_grid[self.y + 1][self.x - 1].updated == False:
+                map_grid[self.y + 1][self.x].update_possibilities(possible_connections[self.tile_type - 1]["down"])
+
+
     def collapse(self):
         if len(self.possibilities) > 0:
             self.tile_type = random.choice(self.possibilities)
-            print("x:" + str(self.x) + ", y:" + str(self.y) + "    became: " + str(self.tile_type))
-            if self.x > 0 :
-                if map_grid[self.y][self.x - 1].tile_type == 0:
-                    map_grid[self.y][self.x - 1].update_possibilities(possible_connections[self.tile_type - 1]["left"])
-                    print(self)
-                    print("left")
-                    print(possible_connections[self.tile_type - 1]["left"])
-            if self.x < 14 :
-                if map_grid[self.y][self.x + 1].tile_type == 0:
-                    map_grid[self.y][self.x + 1].update_possibilities(possible_connections[self.tile_type - 1]["right"])
-            if self.y > 0:
-                if map_grid[self.y - 1][self.x].tile_type == 0:
-                    map_grid[self.y - 1][self.x].update_possibilities(possible_connections[self.tile_type - 1]["up"])
-            if self.y < 14:
-                if map_grid[self.y + 1][self.x - 1].tile_type == 0:
-                    map_grid[self.y + 1][self.x].update_possibilities(possible_connections[self.tile_type - 1]["down"])
+            #print("x:" + str(self.x) + ", y:" + str(self.y) + "    became: " + str(self.tile_type))
+            update_map(self.x, self.y)
+            
 
 def check_complete():
     for y in map_grid:
         for x in y:
-            if x.tile_type == 0:
+            if x.tile_type == 0 and len(x.possibilities) > 0:
                 return False
     return True
 
@@ -311,22 +323,34 @@ def collapse_random():
     map_grid[rand_y][rand_x].collapse()
 
 def collapse_min_options():
-    chosen = [-1,-1,99]
+    lowest_options = 99
+    lowest_options_tiles = []
     for y in map_grid:
         for current_tile in y:
             if current_tile.tile_type == 0:
-                if len(current_tile.possibilities) < chosen[2]:
-                    chosen[2] = len(current_tile.possibilities)
-                    chosen[0] = current_tile.x
-                    chosen[1] = current_tile.y
-    print("collapsed: (" + str(chosen[0]) + ", " + str(chosen[1]) + ")")
-    map_grid[chosen[1]][chosen[0]].collapse()
+                if len(current_tile.possibilities) < lowest_options and len(current_tile.possibilities) > 0:
+                    lowest_options = len(current_tile.possibilities)
+                    lowest_options_tiles.clear()
+                    new_option = [current_tile.x, current_tile.y]
+                    lowest_options_tiles.append(new_option)
 
+    #print("collapsing " + str(len(lowest_options_tiles)))
+    if len(lowest_options_tiles) > 0:
+        option = random.choice(lowest_options_tiles)
+        map_grid[option[1]][option[0]].collapse()
+    
+def update_map(x,y):
+    for i in map_grid:
+        for j in y:
+            if map_grid[i][j].tile_type == 0:
+                map_grid[i][j].updated = False
+
+    map_grid[y][x].update_possible_neighboors()
 
 running = True
 map_grid = create_matrix()
 
-collapse_random()
+collapse_min_options()
 
 image1 = pygame.image.load('tile_1.png')
 image2 = pygame.image.load('tile_2.png')
@@ -366,4 +390,5 @@ while running:
     pygame.display.update()
     time.sleep(0.2)
 
+print(conflicts)
 pygame.quit()
