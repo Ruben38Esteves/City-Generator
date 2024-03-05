@@ -4,6 +4,7 @@ import time
 
 class Tile:
     possibilities = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+    #possibilities = [9,10,11,12,13,14,15]
     tile_type : int = 0
     updated = False
 
@@ -14,7 +15,7 @@ class Tile:
     def __str__(self):
         return "x:" + str(self.x) + ", y:" + str(self.y)
 
-    def update_possibilities(self, new_possibilities):
+    def update_possibilities(self, new_possibilities, prev_type, prev_amount):
         self.updated = True
         save_for_debug = self.possibilities
         self.possibilities = [x for x in self.possibilities if x in new_possibilities]
@@ -22,6 +23,10 @@ class Tile:
         if len(self.possibilities) == 1:
             self.collapse()
         elif len(self.possibilities) == 0:
+            print("-----------------------------------")
+            print(prev_type)
+            print(prev_amount)
+            print(self)
             print(save_for_debug)
             print(new_possibilities)
         """
@@ -46,23 +51,21 @@ class Tile:
     def update_possible_neighboors(self):
         if self.x > 0 :
             if map_grid[self.y][self.x - 1].tile_type == 0: #and map_grid[self.y + 1][self.x - 1].updated == False:
-                map_grid[self.y][self.x - 1].update_possibilities(possible_connections[self.tile_type - 1]["left"])
+                map_grid[self.y][self.x - 1].update_possibilities(possible_connections[self.tile_type - 1]["left"], self.tile_type, len(self.possibilities))
         if self.x < 14 :
             if map_grid[self.y][self.x + 1].tile_type == 0: #and map_grid[self.y + 1][self.x - 1].updated == False:
-                map_grid[self.y][self.x + 1].update_possibilities(possible_connections[self.tile_type - 1]["right"])
+                map_grid[self.y][self.x + 1].update_possibilities(possible_connections[self.tile_type - 1]["right"], self.tile_type, len(self.possibilities))
         if self.y > 0:
             if map_grid[self.y - 1][self.x].tile_type == 0: #and map_grid[self.y + 1][self.x - 1].updated == False:
-                map_grid[self.y - 1][self.x].update_possibilities(possible_connections[self.tile_type - 1]["up"])
+                map_grid[self.y - 1][self.x].update_possibilities(possible_connections[self.tile_type - 1]["up"], self.tile_type, len(self.possibilities))
         if self.y < 14:
             if map_grid[self.y + 1][self.x - 1].tile_type == 0: #and map_grid[self.y + 1][self.x - 1].updated == False:
-                map_grid[self.y + 1][self.x].update_possibilities(possible_connections[self.tile_type - 1]["down"])
+                map_grid[self.y + 1][self.x].update_possibilities(possible_connections[self.tile_type - 1]["down"], self.tile_type, len(self.possibilities))
 
 
     def collapse(self):
         if len(self.possibilities) > 0:
             self.tile_type = random.choice(self.possibilities)
-            #print("x:" + str(self.x) + ", y:" + str(self.y) + "    became: " + str(self.tile_type))
-            #update_map(self.x, self.y)~
             self.update_possible_neighboors()
 
 pygame.init()
@@ -256,9 +259,9 @@ possible_connections = [
     #17
     {
         "up": [1,16,19,20],
-        "down" : [3,5],
+        "down" : [3,5,19],
         "left" : [4,16,18,20],
-        "right" : [2,5],
+        "right" : [2,5,18],
         "up_right" : [],
         "up_left" : [],
         "down_right" : [],
@@ -267,8 +270,8 @@ possible_connections = [
     #18
     {
         "up": [1,16,19,20],
-        "down" : [4,6],
-        "left" : [2,6],
+        "down" : [4,6,20],
+        "left" : [2,6,17],
         "right" : [3,16,17,19],
         "up_right" : [],
         "up_left" : [],
@@ -277,10 +280,10 @@ possible_connections = [
     },
     #19
     {
-        "up": [3,7],
+        "up": [3,7,17],
         "down" : [2,16,17,18],
         "left" : [4,16,18,20],
-        "right" : [1,7],
+        "right" : [1,7,20],
         "up_right" : [],
         "up_left" : [],
         "down_right" : [],
@@ -288,9 +291,9 @@ possible_connections = [
     },
     #20
     {
-        "up": [4,8],
+        "up": [4,8,18],
         "down" : [2,16,17,18],
-        "left" : [1,8],
+        "left" : [1,8,19],
         "right" : [3,16,17,19],
         "up_right" : [],
         "up_left" : [],
@@ -418,6 +421,9 @@ def collapse_min_options():
                     lowest_options_tiles.clear()
                     new_option = [current_tile.x, current_tile.y]
                     lowest_options_tiles.append(new_option)
+                elif len(current_tile.possibilities) == lowest_options:
+                    new_option = [current_tile.x, current_tile.y]
+                    lowest_options_tiles.append(new_option)
 
     #print("collapsing " + str(len(lowest_options_tiles)))
     if len(lowest_options_tiles) > 0:
@@ -464,7 +470,8 @@ while running:
     for y in map_grid:
         for x in y:
             x.paint_on_screen()
-
+            
+            
     if not check_complete():
         collapse_min_options()
 
@@ -475,7 +482,7 @@ while running:
 
 
     pygame.display.update()
-    #time.sleep(0.2)
+    time.sleep(0.2)
 
 
 
