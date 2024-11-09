@@ -1,62 +1,92 @@
+from connections import possible_connections
+import random
+
 class Tile:
-    possibilities = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
     tile_type : int = 0
     updated = False
 
     def __init__(self,x,y):
         self.x = x
         self.y = y
+        self.possibilities = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+        self.entropy = len(self.possibilities)
+
+        self.possible_connections = {
+            "left":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+            "right":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+            "up":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+            "down":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+        }
+        self.neighboors = {}
 
     def __str__(self):
         return "x:" + str(self.x) + ", y:" + str(self.y)
+    
+    def __repr__(self):
+        return f"Tile(x={self.x}, y={self.y})"
+    
+    def add_neighboor(self,direction,tile):
+        self.neighboors[direction] = tile
 
-    def update_possibilities(self, new_possibilities):
-        self.updated = True
-        save_for_debug = self.possibilities
+    def update_possibilities(self, neighboor_possibilities, direction):
+
+        old_entropy = len(self.possibilities)
+        new_possibilities = []
+        for a in self.possibilities:
+            can_connect = False
+            for b in neighboor_possibilities:
+                if b in possible_connections[a][direction]:
+                    can_connect = True
+            if can_connect:
+                new_possibilities += [a]
+                can_connect = False
+        
+        self.possibilities = new_possibilities
+        self.entropy = len(self.possibilities)
+
+        updated = old_entropy != self.entropy
+        return updated
+
+
+
+    def update_possibilities_2(self, new_possibilities):
+        print("update_possibilities")
+        old_entropy = self.entropy
         self.possibilities = [x for x in self.possibilities if x in new_possibilities]
-        #self.update_possible_neighboors()
-        if len(self.possibilities) == 1:
-            self.collapse()
-        elif len(self.possibilities) == 0:
-            print(save_for_debug)
-            print(new_possibilities)
-        """
-        if len(self.possibilities) == 0:
-            self.possibilities =  save_for_debug
-            print("conflicts")
-            
-            print(self)
-            print(save_for_debug)
-            print(new_possibilities)
-            pygame.quit()
-            """
+        self.entropy = len(self.possibilities)
 
-    def paint_on_screen(self):
-        if self.tile_type >= 1 :
-            screen.blit(get_tile_image(self.tile_type),(self.x *64,self.y * 64))
-        else:
-            text = my_font.render(str(len(self.possibilities)), False, (255, 255, 255))
-            screen.blit(text, (self.x *64,self.y * 64))
-            #pygame.draw.rect(screen, colour_tile(self.tile_type), pygame.Rect(self.x * 64,self.y * 64,64,64))
+        new_left = []
+        new_right = []
+        new_up = []
+        new_down = []
+        for x in self.possibilities.copy():
+            new_left += [i for i in possible_connections[x]["left"] if i not in new_left]
+            new_right += [i for i in possible_connections[x]["right"] if i not in new_right]
+            new_up += [i for i in possible_connections[x]["up"] if i not in new_up]
+            new_down += [i for i in possible_connections[x]["down"] if i not in new_down]
 
-    def update_possible_neighboors(self):
-        if self.x > 0 :
-            if map_grid[self.y][self.x - 1].tile_type == 0: #and map_grid[self.y + 1][self.x - 1].updated == False:
-                map_grid[self.y][self.x - 1].update_possibilities(possible_connections[self.tile_type - 1]["left"])
-        if self.x < 14 :
-            if map_grid[self.y][self.x + 1].tile_type == 0: #and map_grid[self.y + 1][self.x - 1].updated == False:
-                map_grid[self.y][self.x + 1].update_possibilities(possible_connections[self.tile_type - 1]["right"])
-        if self.y > 0:
-            if map_grid[self.y - 1][self.x].tile_type == 0: #and map_grid[self.y + 1][self.x - 1].updated == False:
-                map_grid[self.y - 1][self.x].update_possibilities(possible_connections[self.tile_type - 1]["up"])
-        if self.y < 14:
-            if map_grid[self.y + 1][self.x - 1].tile_type == 0: #and map_grid[self.y + 1][self.x - 1].updated == False:
-                map_grid[self.y + 1][self.x].update_possibilities(possible_connections[self.tile_type - 1]["down"])
+        self.possible_connections["left"] = new_left.copy()
+        self.possible_connections["right"] = new_right.copy()
+        self.possible_connections["up"] = new_up.copy()
+        self.possible_connections["down"] = new_down.copy()
 
+        updated = old_entropy != self.entropy
+        return updated
+
+    def update_neighboors(self):
+        for direction in self.neighboors.keys():
+            neighboor : Tile = self.neighboors[direction]
+            if neighboor.tile_type != 0:
+                neighboor.update_possibilities(self.possible_connections[direction])
 
     def collapse(self):
+        print("collapsing: ",self)
         if len(self.possibilities) > 0:
             self.tile_type = random.choice(self.possibilities)
-            #print("x:" + str(self.x) + ", y:" + str(self.y) + "    became: " + str(self.tile_type))
-            #update_map(self.x, self.y)~
-            self.update_possible_neighboors()
+            self.possibilities = [self.tile_type]
+            self.entropy = 0
+            # self.possible_connections["left"] = possible_connections[self.tile_type]["left"]
+            # self.possible_connections["right"] = possible_connections[self.tile_type]["right"]
+            # self.possible_connections["up"] = possible_connections[self.tile_type]["up"]
+            # self.possible_connections["down"] = possible_connections[self.tile_type]["down"]
+            # self.update_neighboors()
