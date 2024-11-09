@@ -153,5 +153,5 @@ while running:
 
 
     pygame.display.update()
-    #4time.sleep(0.2)
+    time.sleep(0.1)
 pygame.quit()
