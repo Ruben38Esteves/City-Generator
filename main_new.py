@@ -127,12 +127,7 @@ image18 = pygame.image.load('tiles/tile_18.png')
 image19 = pygame.image.load('tiles/tile_19.png')
 image20 = pygame.image.load('tiles/tile_20.png')
 
-def check_complete():
-    for y in city.matrix:
-        for x in y:
-            if x.tile_type == 0:
-                return False
-    return True
+finished = False
 
 while running:
     screen.fill((0,0,0))
@@ -141,7 +136,6 @@ while running:
         for x in y:
             paint_on_screen(x)
 
-    finished = False
     if not finished:
         finished = city.wave_function_collapse()
     
@@ -153,5 +147,5 @@ while running:
 
 
     pygame.display.update()
-    time.sleep(0.1)
+    #time.sleep(0.1)
 pygame.quit()

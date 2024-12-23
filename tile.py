@@ -23,18 +23,23 @@ class Tile:
 
     def update_possibilities(self, neighboor_possibilities, direction):
         old_entropy = len(self.possibilities)
+        old_possibilities = self.possibilities.copy()
         new_possibilities = []
         for a in self.possibilities:
             can_connect = False
             for b in neighboor_possibilities:
                 if b in possible_connections[a][direction]:
                     can_connect = True
+                    break
             if can_connect:
                 new_possibilities += [a]
                 can_connect = False
         
         self.possibilities = new_possibilities
         self.entropy = len(self.possibilities)
+
+        if self.entropy == 0 and len(old_possibilities) != 0:
+            print("Used to be able to be ", old_possibilities, " and was constrained by ", neighboor_possibilities, self)
 
         updated = old_entropy != self.entropy
         return updated
@@ -46,8 +51,11 @@ class Tile:
                 neighboor.update_possibilities(self.possible_connections[direction])
 
     def collapse(self):
+
         if len(self.possibilities) > 0:
             possibilities_weights = [weights[x] for x in self.possibilities]
             self.tile_type = random.choices(self.possibilities,weights=possibilities_weights, k=1)[0]
             self.possibilities = [self.tile_type]
             self.entropy = 0
+        else:
+            print("cant collapse a tile without options")

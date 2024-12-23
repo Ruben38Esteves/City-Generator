@@ -1,5 +1,6 @@
 from tile import Tile
 from stack import Stack 
+from collections import deque
 import random
 
 class City:
@@ -37,7 +38,6 @@ class City:
                     lowest_entropy_tiles = [tile]
                 elif entropy == lowest_entropy:
                     lowest_entropy_tiles += [tile]
-        print(lowest_entropy)
         return lowest_entropy_tiles
     
     def wave_function_collapse(self):
@@ -50,7 +50,6 @@ class City:
 
         stack = Stack()
         stack.push(current_tile)
-        print(stack.stack, " is the content of the stack")
 
         while(stack.not_empty()):
             current_tile : Tile = stack.pop()

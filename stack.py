@@ -16,7 +16,3 @@ class Stack:
             print("Stack is empty. Cannot pop.")
             return None
         return self.stack.pop()
-    
-lista = []
-lista += [1]
-print(lista)
